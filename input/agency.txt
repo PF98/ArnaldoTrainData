@@ -1,0 +1,1 @@
+<?xml version="1.0" encoding="utf-8"?><table><row id=""><agency_timezone>Europe/Rome</agency_timezone><agency_name>Trenord</agency_name><agency_url>http://www.trenord.it/</agency_url><agency_phone> </agency_phone><agency_id>Trenord</agency_id><agency_lang>IT</agency_lang></row></table>
