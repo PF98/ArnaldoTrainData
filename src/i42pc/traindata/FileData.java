@@ -15,13 +15,32 @@ public class FileData {
 	private ArrayList<String> titles = new ArrayList<String>();
 	private boolean titlesLocked = false;
 	private ArrayList<ArrayList<String>> dataSet = new ArrayList<ArrayList<String>>();
+	private ArrayList<Link> linkList = new ArrayList<Link>();
 	private int activeRow = 0;
+	private boolean finished = false;
+	private Link currentLink;
+	
+	private String rowTag;
+	private ArrayList<String> validTitles = null;
 	
 	/**
 	 * <p>Basic constructor: initializes the object</p>
 	 */
 	public FileData() {}
 	
+	private FileData(FileData other) {
+		this.name = other.name;
+		this.titles = new ArrayList<String>(other.titles);
+		this.titlesLocked = true;
+		this.dataSet = new ArrayList<ArrayList<String>>(other.dataSet);
+		this.linkList = new ArrayList<Link>(other.linkList);
+		this.activeRow = 0;
+		this.finished = false;
+		if (other.validTitles != null)
+			this.validTitles = new ArrayList<String>(other.validTitles);
+		else
+			this.validTitles = null;
+	}
 	/**
 	 * <p>Returns the name of the file</p>
 	 * @return The name of the file
@@ -38,13 +57,61 @@ public class FileData {
 		this.name = name;
 	}
 	
+	public ArrayList<String> getNextRow() {
+		return new ArrayList<String>(dataSet.get(activeRow++));
+	}
+	
+	public boolean hasNextRow() {
+		if (activeRow <= dataSet.size() - 1)
+			return true;
+		return false;
+	}
+
+	public boolean setValidTitles(ArrayList<String> validTitles) {
+		for (String vt : validTitles) {
+			if (!titles.contains(vt)) {
+				this.validTitles = null;				
+				return false;
+			}
+		}
+		this.validTitles = new ArrayList<String>(validTitles);
+		return true;
+	}
+	
+	public ArrayList<String> getValidTitles() {
+		if (this.validTitles != null)
+			return new ArrayList<String>(this.validTitles);
+		return new ArrayList<String>(this.titles);
+	}
+	
+	public boolean setRowTag(String rowTag) {
+		if (titles.contains(rowTag)) {
+			this.rowTag = rowTag;				
+			return true;
+		}
+		this.rowTag = null;
+		return false;
+	}
+	
+	public String getRowTag() {
+		return this.rowTag;
+	}
+	
+	/**
+	 * </p>Returns an {@code ArrayList<String>} containing all of the titles
+	 * @return
+	 */
+	public ArrayList<String> getTitles() {
+		return new ArrayList<String>(titles);
+	}
+	
 	/**
 	 * <p>Sets the list of titles of the data to a given list</p>
 	 * @param titles An ArrayList of strings containing the new titles
 	 * @return True if the operation is successful
 	 */
 	public boolean setTitles(ArrayList<String> titles) {
-		if (titlesLocked)
+		if (titlesLocked || finished)
 			return false;
 		this.titles = new ArrayList<String>(titles);
 		return true;
@@ -56,13 +123,15 @@ public class FileData {
 	 * @return True if the operation is successful
 	 */
 	public boolean addTitle(String newTitle) {
-		if (titlesLocked)
+		if (titlesLocked || finished)
 			return false;
 		if (titles.contains(newTitle))
 			return false;
 		this.titles.add(newTitle);
 		return true;
 	}
+	
+	
 	/**
 	 * <p>This method locks the titles, meaning that the list of titles isn't editable anymore.</p>
 	 * <p>It must be called as soon as possible when all the titles are set, as the class uses
@@ -80,6 +149,30 @@ public class FileData {
 		return titlesLocked;
 	}
 	
+	public void setFinished() {
+		activeRow = 0;
+		this.finished = true;
+	}
+	
+	public boolean isFinished() {
+		return finished;
+	}
+	
+	public FileData cloneWithSomeValues(String searchValue, String searchTitle) {
+		FileData out = new FileData(this);
+		ArrayList<ArrayList<String>> filteredDataSet = new ArrayList<ArrayList<String>>();
+		int titleId = this.titles.indexOf(searchTitle);
+		if (titleId == -1) return null;
+		for (ArrayList<String> entry : this.dataSet) {
+			if (entry.get(titleId).equals(searchValue)) {
+				filteredDataSet.add(new ArrayList<String>(entry));
+			}
+		}
+		out.dataSet = filteredDataSet;
+		out.setFinished();
+		return out;
+	}
+	
 	/**
 	 * <p>Adds a single value to the data table and runs some controls on the data.</p>
 	 * <p>The controls run by this method are:<br>
@@ -90,6 +183,7 @@ public class FileData {
 	 * @return True if the operation is successful and all of the checks don't show errors
 	 */
 	public boolean addValue(String title, String value) {
+		if (finished) return false;
 		int index = titles.indexOf(title);
 		if (index == -1 || index != dataSet.get(activeRow).size()) 
 			return false;
@@ -104,6 +198,7 @@ public class FileData {
 	 * @return True if the operation is successful and all of the checks don't show errors
 	 */
 	public boolean addNewLine() {
+		if (finished) return false;
 		if (dataSet.size() != 0) {
 			if (dataSet.get(activeRow).size() != titles.size()) {
 				return false;
@@ -161,5 +256,66 @@ public class FileData {
 			}
 		}
 		return out.toString();
+	}
+	
+	public void addLink(String sourceTitle, String destinationFile, String destinationTitle, String destinationRowName) {
+		Link newLink = new Link(sourceTitle, destinationFile, destinationTitle, destinationRowName);
+		
+		linkList.add(newLink);
+	}
+	
+	public boolean hasLinkFrom(String sourceTitle) {
+		for (Link l : linkList) {
+			if (l.getSourceTitle().equals(sourceTitle)) {
+				currentLink = l;
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	public String getLinkDestinationFile() {
+		return currentLink.getDestinationFile();
+	}
+	
+	public String getLinkDestinationTitle() {
+		return currentLink.getDestinationTitle();
+	}
+	
+	public String getLinkRowName() {
+		return currentLink.getDestinationRowName();
+	}
+	
+	class Link {
+		private String destinationFile;
+		private String sourceTitle;
+		private String destinationTitle;
+		private String destinationRowName;
+
+		public Link(String sourceTitle, String destinationFile, String destinationTitle) {
+			this(sourceTitle, destinationFile, destinationTitle, null);
+		}
+		public Link(String sourceTitle, String destinationFile, String destinationTitle, String destinationRowName) {
+			this.destinationFile = destinationFile;
+			this.sourceTitle = sourceTitle;
+			this.destinationTitle = destinationTitle;
+			this.destinationRowName = destinationRowName;
+		}
+
+		public String getDestinationFile() {
+			return destinationFile;
+		}
+
+		public String getSourceTitle() {
+			return sourceTitle;
+		}
+
+		public String getDestinationTitle() {
+			return destinationTitle;
+		}
+		
+		public String getDestinationRowName() {
+			return destinationRowName;
+		}
 	}
 }

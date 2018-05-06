@@ -169,6 +169,7 @@ public class XMLFileReader {
 	 */
 	private void closedElement(String closedElementName) {
 		if (closedElementName.equals(ROOT_TAG)) {
+			fileData.setFinished();
 			finished = true;
 			return;
 		}

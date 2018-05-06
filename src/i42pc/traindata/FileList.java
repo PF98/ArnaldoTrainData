@@ -13,6 +13,7 @@ public class FileList {
 	private ArrayList<FileData> list;
 	private File folder;
 	private String invalidPath = null;
+	private String startingFile;
 	
 	/**
 	 * <p>Basic constructor to initialize the object with the path of the folder containing the files
@@ -87,5 +88,66 @@ public class FileList {
 		}
 		
 		return out.toString();
+	}
+	
+	private boolean isFile(String fileName) {
+		if (getFile(fileName) == null) 
+			return false;
+		return true;
+	}
+	
+	public FileData getFile(String fileName) {
+		for (FileData f : list) {
+			if (fileName.equals(f.getName()))
+				return f;
+				
+		}
+		return null;
+	}
+	
+	private boolean hasTitle(String fileName, String title) {
+		FileData file = getFile(fileName);
+		if (file == null)
+			return false;
+		if (file.getTitles().contains(title))
+			return true;
+		return false;
+	}
+	
+	public boolean setStartingFile(String fileName) {
+		if (isFile(fileName)) {
+			this.startingFile = fileName;
+			return true;
+		}
+		this.startingFile = null;
+		return true;
+	}
+	
+	public String getStartingFile() {
+		return this.startingFile;
+	}
+	
+	public ArrayList<String> getAllFilesNames() {
+		ArrayList<String> out = new ArrayList<String>();
+		for (FileData f : list) {
+			out.add(f.getName());
+		}
+		return out;
+	}
+	
+	public boolean addFileLink(String sourceFile, String sourceTitle, String destinationFile, String destinationTitle, String destinationRowName) {
+		if (!isFile(sourceFile) || !isFile(destinationFile))
+			return false;
+		
+		if (!hasTitle(sourceFile, sourceTitle) || !hasTitle(destinationFile, destinationTitle))
+			return false;
+		
+		getFile(sourceFile).addLink(sourceTitle, destinationFile, destinationTitle, destinationRowName);
+				
+		return true;
+	}
+	
+	public boolean addFileLink(String sourceFile, String sourceTitle, String destinationFile, String destinationTitle) {
+		return addFileLink(sourceFile, sourceTitle, destinationFile, destinationTitle, null);
 	}
 }
