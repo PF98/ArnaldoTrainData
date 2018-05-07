@@ -61,15 +61,41 @@ public class XMLFileWriter {
 	}
 	
 	/**
+	 * Writes to file all of the data in the given file
+	 * @param fileName The name of the file
+	 * @param rowTag The tag to be used as a row tag surrounding all of the data for such row
+	 * @param rowAttribute The name of the attribute for the row tag (by default, 'id': if the rowTag has name 'service_id', it will be changed to <service id="...">)
+	 * @param alternateRowAttribute The alternative name for the attribute of the row tag, if rowTag has no 'id' at the end
+	 * @param validTitles The list of valid titles (to be printed) in the file
+	 * @param titleAttribute The name of the attribute for every title (by default, 'id': if the rowTag has name 'service_id', it will be changed to <service id="...">)
+	 * @param alternateTitleAttribute The alternative name for the attribute of every title, if rowTag has no 'id' at the end
+	 * @return True if successfull, false otherwise
 	 */
 	private boolean addAll(String fileName, String rowTag, String rowAttribute, String alternateRowAttribute, ArrayList<String> validTitles, String titleAttribute, String alternateTitleAttribute) {
 		return addAll(fileName, rowTag, rowAttribute, alternateRowAttribute, validTitles, titleAttribute, alternateTitleAttribute, null, null);
 	}
+
+	/**
+	 * Writes to file all of the data in the given file
+	 * This method call can contain a filter for the file
+	 * @param fileName The name of the file
+	 * @param rowTag The tag to be used as a row tag surrounding all of the data for such row
+	 * @param rowAttribute The name of the attribute for the row tag (by default, 'id': if the rowTag has name 'service_id', it will be changed to <service id="...">)
+	 * @param alternateRowAttribute The alternative name for the attribute of the row tag, if rowTag has no 'id' at the end
+	 * @param validTitles The list of valid titles (to be printed) in the file
+	 * @param titleAttribute The name of the attribute for every title (by default, 'id': if the rowTag has name 'service_id', it will be changed to <service id="...">)
+	 * @param alternateTitleAttribute The alternative name for the attribute of every title, if rowTag has no 'id' at the end
+	 * @param searchValue The only values to accept in the file
+	 * @param searchTitle The title for searchValue
+	 * @return True if successfull, false otherwise
+	 */
 	private boolean addAll(String fileName, String rowTag, String rowAttribute, String alternateRowAttribute, ArrayList<String> validTitles, String titleAttribute, String alternateTitleAttribute, String searchValue, String searchTitle) {
 		return addAll(fileName, rowTag, rowAttribute, alternateRowAttribute, validTitles, titleAttribute, alternateTitleAttribute, null, null, null);
 	}
 	/**
 	 * Writes to file all of the data in the given file
+	 * This method call can contain a filter for the file
+	 * This method call can contain a substitutive row name
 	 * @param fileName The name of the file
 	 * @param rowTag The tag to be used as a row tag surrounding all of the data for such row
 	 * @param rowAttribute The name of the attribute for the row tag (by default, 'id': if the rowTag has name 'service_id', it will be changed to <service id="...">)
@@ -84,15 +110,17 @@ public class XMLFileWriter {
 	 */
 	private boolean addAll(String fileName, String rowTag, String rowAttribute, String alternateRowAttribute, ArrayList<String> validTitles, String titleAttribute, String alternateTitleAttribute, String searchValue, String searchTitle, String substituteRowName) {
 		FileData currentFile;
+		// gets the FileData object
 		if (searchValue == null) {
-			currentFile = fileList.getFile(fileName);
+			currentFile = fileList.getFile(fileName); // plain file
 		}
 		else {
-			currentFile = fileList.getFile(fileName).cloneWithSomeValues(searchValue, searchTitle);
+			currentFile = fileList.getFile(fileName).cloneWithSomeValues(searchValue, searchTitle); // filtered file
 		}
 		try {
-			ArrayList<String> fileTitles = currentFile.getTitles();
-
+			ArrayList<String> fileTitles = currentFile.getTitles(); // the titles of the file
+			
+			// starts the control for search links
 			int searchCount = 0;
 			String titleOfControl = null;
 			FileData searchFile = null;
@@ -111,10 +139,13 @@ public class XMLFileWriter {
 			if (searchCount > 1)
 				return false;
 			boolean isLinkSearching = (searchCount == 1);			
+			// end of check for search links
 			
+			// loops through all of the rows of the file
 			while (currentFile.hasNextRow()) {
 				ArrayList<String> activeRow = currentFile.getNextRow();
 				
+				// search link check
 				boolean rowToPrint = true;
 				if (isLinkSearching) {
 					String valueToControl = activeRow.get(valueToControlIndex);
@@ -129,6 +160,7 @@ public class XMLFileWriter {
 					String rowTitle = null;
 					String rowAttributeName = null;
 					String attributeVal = null;
+					// writes the row element, if required
 					if ((rowTag != null || substituteRowName != null) && !NOT_PRINTING_ROW.equals(substituteRowName)) {
 						String usedRowTag = (rowTag == null) ? substituteRowName : rowTag;
 						ArrayList<String> rowSplit = new ArrayList<String>(Arrays.asList(usedRowTag.split("_")));
@@ -164,6 +196,7 @@ public class XMLFileWriter {
 					int id = 0;
 					for (String val : activeRow) {
 						String title = fileTitles.get(id);
+						// writes the inner data element
 						if (!title.equals(rowTag) && validTitles.contains(title)) {
 							ArrayList<String> titleSplit = new ArrayList<String>(Arrays.asList(title.split("_")));
 							String tagTitle;
@@ -178,7 +211,8 @@ public class XMLFileWriter {
 							}
 							writer.writeStartElement(tagTitle);
 							writer.writeAttribute(attribute, val);
-						}						
+						}					
+						// checks if a link exists
 						if (currentFile.hasLinkFrom(title) && !currentFile.isLinkSearch()) {
 							FileData linkedFile = fileList.getFile(currentFile.getLinkDestinationFile());
 							String newRow = currentFile.getLinkRowName();
