@@ -20,6 +20,7 @@ public class TrainMain {
 		String outFileName = null;
 		File test;
 		String folderPath = null;
+		String rootTag = "services";
 		do {
 			if (folderPath != null) {
 				System.out.println("\tPlease insert a valid folder path.");
@@ -72,6 +73,7 @@ public class TrainMain {
 				break;
 			case 4: // print the file
 				looping = false;
+				rootTag = Utility.getString("Insert the name for the root tag");
 				do {
 					if (outFileName != null)
 						System.out.println("The inserted name is not valid.");
@@ -112,7 +114,7 @@ public class TrainMain {
 			validTitles.add("trip_id");
 			validTitles.add("route_id");
 			fl.getStartingFile().setValidTitles(validTitles);
-			fl.addSearchLink(fl.getStartingFileName(), "service_id", "calendar_dates.txt", "service_id", null);
+			fl.addSearchLink(fl.getStartingFileName(), "service_id", "calendar_dates.txt", "service_id");
 			fl.addFileLink(fl.getStartingFileName(), "trip_id", "stop_times.txt", "trip_id", null);
 			fl.addFileLink(fl.getStartingFileName(), "route_id", "routes.txt", "route_id", "#NO#PRINT#");
 			
@@ -173,7 +175,7 @@ public class TrainMain {
 		String outPath = "./output/" + outFileName + ".xml";
 		XMLFileWriter fw = new XMLFileWriter(fl, outPath);
 		System.out.println(printMessage);
-		System.out.println(fw.printAll("services") ? "The file was successfully printed. The file path is ./output/" + outFileName + ".xml" : "There's been an error while printing the file.");
+		System.out.println(fw.printAll(rootTag) ? "The file was successfully printed. The file path is ./output/" + outFileName + ".xml" : "There's been an error while printing the file.");
 		
 	}
 

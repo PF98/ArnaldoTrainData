@@ -166,7 +166,7 @@ public class FileList {
 	}
 	
 	/**
-	 * Adds a link between two files
+	 * Adds a link between two files, specifying a substitutive row name for the destination file of the link
 	 * @param sourceFile The file from which the link starts
 	 * @param sourceTitle The starting point (a title in sourceFile) for the link
 	 * @param destinationFile The file in which the link ends
@@ -186,18 +186,37 @@ public class FileList {
 		return true;
 	}
 	
+	/**
+	 * Adds a link between two files
+	 * @param sourceFile The file from which the link starts
+	 * @param sourceTitle The starting point (a title in sourceFile) for the link
+	 * @param destinationFile The file in which the link ends
+	 * @param destinationTitle The ending point (a title in destinationFile) for the link
+	 * @return True if the parameters are valid and the link is created, false otherwise
+	 */
 	public boolean addFileLink(String sourceFile, String sourceTitle, String destinationFile, String destinationTitle) {
 		return addFileLink(sourceFile, sourceTitle, destinationFile, destinationTitle, null);
 	}
-	 
-	public boolean addSearchLink(String sourceFile, String sourceTitle, String destinationFile, String destinationTitle, String destinationRowName) {
+	
+	/**
+	 * Adds a special kind of link: the search one.
+	 * This link allows to filter the data of a file through a second file:
+	 * The printer will thus print a row of the sourceFile only if the value in the field sourceTitle
+	 * exists in destinationFile, in the field destinationTitle
+	 * @param sourceFile The file to be filtered
+	 * @param sourceTitle The title of the values in sourceFile to be filtered
+	 * @param destinationFile The filtering file
+	 * @param destinationTitle The title of the values in destinationFile to be checked against
+	 * @return
+	 */
+	public boolean addSearchLink(String sourceFile, String sourceTitle, String destinationFile, String destinationTitle) {
 		if (!isFile(sourceFile) || !isFile(destinationFile))
 			return false;
 		
 		if (!hasTitle(sourceFile, sourceTitle) || !hasTitle(destinationFile, destinationTitle))
 			return false;
 		
-		getFile(sourceFile).addLink(sourceTitle, destinationFile, destinationTitle, destinationRowName, true);
+		getFile(sourceFile).addLink(sourceTitle, destinationFile, destinationTitle, null, true);
 				
 		return true;
 	}

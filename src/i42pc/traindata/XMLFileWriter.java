@@ -20,7 +20,11 @@ public class XMLFileWriter {
 	private XMLOutputFactory output;
 	private XMLStreamWriter writer;
 
-	
+	/**
+	 * Constructor for this object
+	 * @param fileList The FileList object containing all of the data to be written to file
+	 * @param filePath The path of the resulting file
+	 */
 	public XMLFileWriter(FileList fileList, String filePath) {
 		this.fileList = fileList;
 		output = XMLOutputFactory.newInstance();
@@ -32,13 +36,13 @@ public class XMLFileWriter {
 		}
 	}
 	
+	/**
+	 * This method writes to file all of the data provided
+	 * It initializes the file, writes the root tag and starts printing all of the data in the starting file in the FileList
+	 * @param rootTagName The name of the root tag in the file
+	 * @return True if successful, false otherwise
+	 */
 	public boolean printAll(String rootTagName) {
-		if (!init(rootTagName))
-			return false;
-		return true;
-	}
-	
-	private boolean init(String rootTagName) {
 		FileData currentFile = fileList.getStartingFile();
 		try {
 			writer.writeStartElement(rootTagName); // start root tag
@@ -56,12 +60,28 @@ public class XMLFileWriter {
 		return true;
 	}
 	
+	/**
+	 */
 	private boolean addAll(String fileName, String rowTag, String rowAttribute, String alternateRowAttribute, ArrayList<String> validTitles, String titleAttribute, String alternateTitleAttribute) {
 		return addAll(fileName, rowTag, rowAttribute, alternateRowAttribute, validTitles, titleAttribute, alternateTitleAttribute, null, null);
 	}
 	private boolean addAll(String fileName, String rowTag, String rowAttribute, String alternateRowAttribute, ArrayList<String> validTitles, String titleAttribute, String alternateTitleAttribute, String searchValue, String searchTitle) {
 		return addAll(fileName, rowTag, rowAttribute, alternateRowAttribute, validTitles, titleAttribute, alternateTitleAttribute, null, null, null);
 	}
+	/**
+	 * Writes to file all of the data in the given file
+	 * @param fileName The name of the file
+	 * @param rowTag The tag to be used as a row tag surrounding all of the data for such row
+	 * @param rowAttribute The name of the attribute for the row tag (by default, 'id': if the rowTag has name 'service_id', it will be changed to <service id="...">)
+	 * @param alternateRowAttribute The alternative name for the attribute of the row tag, if rowTag has no 'id' at the end
+	 * @param validTitles The list of valid titles (to be printed) in the file
+	 * @param titleAttribute The name of the attribute for every title (by default, 'id': if the rowTag has name 'service_id', it will be changed to <service id="...">)
+	 * @param alternateTitleAttribute The alternative name for the attribute of every title, if rowTag has no 'id' at the end
+	 * @param searchValue The only values to accept in the file
+	 * @param searchTitle The title for searchValue
+	 * @param substituteRowName The name of the tag to substitute (only for the name, not for the behaviour) the row tag
+	 * @return True if successfull, false otherwise
+	 */
 	private boolean addAll(String fileName, String rowTag, String rowAttribute, String alternateRowAttribute, ArrayList<String> validTitles, String titleAttribute, String alternateTitleAttribute, String searchValue, String searchTitle, String substituteRowName) {
 		FileData currentFile;
 		if (searchValue == null) {

@@ -14,8 +14,6 @@ public class Utility {
 	 * Deals with the reader to get an input of type double from the keyboard in the console.
 	 * @param message The message that gets printed on the console before reading the data. Messages ending with a ": " string are suggested for readability of the request.
 	 * @return A double value read from the keyboard.
-	 * 
-	 * @author paolo faustini
 	 */
 	public static double getDouble(String message) {
 		final String EXPECTED_TYPE = "double";
@@ -41,8 +39,6 @@ public class Utility {
 	 * @param lowerLimit The lower bound of the read value.
 	 * @param upperLimit The upper bound of the read value.
 	 * @return A double value read from the keyboard and included between two given bounds.
-	 * 
-	 * @author paolo faustini
 	 */
 	public static double getDouble(String message, double lowerLimit, double upperLimit) {
 		double val = getDouble(message);
@@ -59,8 +55,6 @@ public class Utility {
 	 * Deals with the reader to get an input of type String from the keyboard in the console.
 	 * @param message The message that gets printed on the console before reading the data. Messages ending with a ": " string are suggested for readability of the request.
 	 * @return A String value read from the keyboard.
-	 * 
-	 * @author paolo faustini
 	 */
 	public static String getString(String message) {
 		final String EXPECTED_TYPE = "String";
@@ -84,8 +78,6 @@ public class Utility {
 	 * Deals with the reader to get an input of type int from the keyboard in the console.
 	 * @param message The message that gets printed on the console before reading the data. Messages ending with a ": " string are suggested for readability of the request.
 	 * @return A int value read from the keyboard.
-	 * 
-	 * @author paolo faustini
 	 */
 	public static int getInt(String message) {
 		final String EXPECTED_TYPE = "int";
@@ -111,8 +103,6 @@ public class Utility {
 	 * @param lowerLimit The lower bound of the read value.
 	 * @param upperLimit The upper bound of the read value.
 	 * @return A int value read from the keyboard and included between two given bounds.
-	 * 
-	 * @author paolo faustini
 	 */
 	public static int getInt(String message, int lowerLimit, int upperLimit) {
 		int val = getInt(message);
