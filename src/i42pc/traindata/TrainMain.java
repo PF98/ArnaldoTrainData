@@ -1,9 +1,7 @@
 package i42pc.traindata;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 public class TrainMain {
 	public static final String FOLDER_PATH = "./input/";
@@ -18,20 +16,30 @@ public class TrainMain {
 									};
 
 	public static void main(String[] args) {
-		Menu menu = new Menu(MENU_MAIN_TITLE, MENU_MAIN_OPTIONS);
-		
+		String printMessage = null;
 		String outFileName = null;
 		File test;
-		String folderPath;
+		String folderPath = null;
 		do {
-			folderPath = Utility.getString("Please insert the path for the input files: ");
+			if (folderPath != null) {
+				System.out.println("\tPlease insert a valid folder path.");
+			}
+			folderPath = Utility.getString(String.format("Please insert the path for the input files (use \"no\" for the default setting: %s): ", FOLDER_PATH));
 			
 			test = new File(folderPath);
 		} while (!test.isDirectory() && !folderPath.equals("no")); 
+		System.out.println("Reading all of the files... Please wait");
 		
 		FileList fl = new FileList(folderPath.equals("no") ? FOLDER_PATH : folderPath);
 		fl.readAllFiles();
-		boolean looping = true;
+		
+		final String[] OPTION_FIRST = {"Use the custom printing mode", "Write to file the first point of the exercise","Write to file the second point of the exercise", "Write to file the third point of the exercise"};
+		Menu firstMenu = new Menu("Which mode would you like to use?", OPTION_FIRST);
+		boolean looping;
+		int option = firstMenu.choose();
+		looping = (option == 0);
+		
+		Menu menu = new Menu(MENU_MAIN_TITLE, MENU_MAIN_OPTIONS);
 		while (looping) {
 			switch (menu.choose()) {
 			case 0: // starting file
@@ -54,7 +62,7 @@ public class TrainMain {
 				String destinationTitle = chooseFileTitleMenu(String.format("What title should be the ending point for the link in the file %s? ", destinationFile), destinationFile, fl);
 				String destRowName = Utility.getString("What should be every row of the sublink be called?"+System.lineSeparator()+"Insert one of the titles in the file, a custom value, \"#NO#PRINT#\" if there is only one element per sublink or \"#null#\" to leave the default value."); 
 				
-				fl.getFile(sourceFile).addLink(sourceTitle, destinationFile, destinationTitle, (destRowName.equals("#null#") ? null : destRowName));
+				fl.addFileLink(sourceFile, sourceTitle, destinationFile, destinationTitle, (destRowName.equals("#null#") ? null : destRowName));
 				break;
 			case 3: // edit valid titles
 				String fileChoiceTitles = chooseFileMenu("What file would you like to edit the valid title list for?", fl);
@@ -68,33 +76,104 @@ public class TrainMain {
 					if (outFileName != null)
 						System.out.println("The inserted name is not valid.");
 					outFileName = Utility.getString("Insert the file name for the output xml file (.xml is not needed): ");
+					printMessage = String.format("Printing the custom made file to %s.\nPlease wait (this could take some time)", outFileName);
 				} while (outFileName.indexOf('.') != -1);
 				break;
 			case 5: // help
 				break;
 			}
 		}
-		/*
-		fl.setStartingFile("trips.txt");
-		fl.getFile(fl.getStartingFile()).setRowTag("service_id");
 		ArrayList<String> validTitles = new ArrayList<String>();
-		validTitles.add("service_id");
-		validTitles.add("trip_id");
-		validTitles.add("route_id");
-		fl.getFile(fl.getStartingFile()).setValidTitles(validTitles);
-		fl.getFile(fl.getStartingFile()).addLink("trip_id", "stop_times.txt", "trip_id", null);
-		fl.getFile(fl.getStartingFile()).addLink("route_id", "routes.txt", "route_id", "#NO#PRINT#");
 		
-		validTitles.clear();
-		validTitles.add("arrival_time");
-		validTitles.add("departure_time");
-		fl.getFile("stop_times.txt").setValidTitles(validTitles);
-		fl.getFile("stop_times.txt").setRowTag("stop_id");
+		switch (option) {
+		case 1:
+			outFileName = "one";
+			fl.setStartingFile("trips.txt");
+			fl.getStartingFile().setRowTag("service_id");
+			validTitles.add("service_id");
+			validTitles.add("trip_id");
+			validTitles.add("route_id");
+			fl.getStartingFile().setValidTitles(validTitles);
+
+			fl.addFileLink(fl.getStartingFileName(), "trip_id", "stop_times.txt", "trip_id", null);
+			fl.addFileLink(fl.getStartingFileName(), "route_id", "routes.txt", "route_id", "#NO#PRINT#");
+			
+			validTitles.clear();
+			validTitles.add("arrival_time");
+			validTitles.add("departure_time");
+			fl.getFile("stop_times.txt").setValidTitles(validTitles);
+			fl.getFile("stop_times.txt").setRowTag("stop_id");
+			break;
+		case 2:
+			outFileName = "two";
+			fl.setStartingFile("trips.txt");
+			fl.getStartingFile().setRowTag("service_id");
+			validTitles.add("service_id");
+			validTitles.add("trip_id");
+			validTitles.add("route_id");
+			fl.getStartingFile().setValidTitles(validTitles);
+			fl.addSearchLink(fl.getStartingFileName(), "service_id", "calendar_dates.txt", "service_id", null);
+			fl.addFileLink(fl.getStartingFileName(), "trip_id", "stop_times.txt", "trip_id", null);
+			fl.addFileLink(fl.getStartingFileName(), "route_id", "routes.txt", "route_id", "#NO#PRINT#");
+			
+			validTitles.clear();
+			validTitles.add("arrival_time");
+			validTitles.add("departure_time");
+			fl.getFile("stop_times.txt").setValidTitles(validTitles);
+			fl.getFile("stop_times.txt").setRowTag("stop_id");
+			break;
+		case 3:
+			fl.setStartingFile("trips.txt");
+			fl.getStartingFile().setRowTag("service_id");
+			fl.addFileLink(fl.getStartingFileName(), "trip_id", "stop_times.txt", "trip_id", null);
+			fl.addFileLink(fl.getStartingFileName(), "route_id", "routes.txt", "route_id", "#NO#PRINT#");
+			fl.addFileLink("routes.txt", "agency_id", "agency.txt", "agency_id", "#NO#PRINT#");
+			fl.addFileLink("stop_times.txt", "stop_id", "stops.txt", "stop_id", "stop_data");
+			fl.addFileLink(fl.getStartingFileName(), "service_id", "calendar.txt", "service_id", "calendar");
+			fl.addFileLink("calendar.txt", "service_id", "calendar_dates.txt", "service_id", "date");
+			
+			fl.getFile("stop_times.txt").setRowTag("stop_id");
+
+			fl.getFile("routes.txt").setRowTag("route_id");
+
+			
+			validTitles.clear();
+			validTitles = fl.getFile("calendar_dates.txt").getTitles();
+			validTitles.remove("service_id");
+			fl.getFile("calendar_dates.txt").setValidTitles(validTitles);
+
+			fl.getFile("calendar_dates.txt").setRowTag("date");
+			
+			
+			validTitles.clear();
+			validTitles = fl.getFile("stops.txt").getTitles();
+			validTitles.remove("stop_id");
+			fl.getFile("stops.txt").setValidTitles(validTitles);
+			
+			
+			validTitles.clear();
+			validTitles = fl.getFile("stop_times.txt").getTitles();
+			validTitles.remove("trip_id");
+			fl.getFile("stop_times.txt").setValidTitles(validTitles);
+			
+			outFileName = "three";
+			break;
+		}
+		if (option != 0)
+			printMessage = String.format("Printing the point %d of the exercise to %s.xml.\nThis might take up to a couple of minutes", option, outFileName);
+		
+		
+		
+		
+		
+		
+		/*
+		
 		*/
 		String outPath = "./output/" + outFileName + ".xml";
 		XMLFileWriter fw = new XMLFileWriter(fl, outPath);
-		System.out.printf("Printing the specified xml file to %s. Please wait... (this might take up to a couple of minutes)\n", outPath);
-		System.out.println(fw.printAll("services") ? "The file was successfully printed" : "There's been an error while printing the file.");
+		System.out.println(printMessage);
+		System.out.println(fw.printAll("services") ? "The file was successfully printed. The file path is ./output/" + outFileName + ".xml" : "There's been an error while printing the file.");
 		
 	}
 

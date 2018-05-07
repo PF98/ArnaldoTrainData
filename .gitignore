@@ -1,0 +1,7 @@
+/bin/
+.*
+!.gitignore
+/output/*
+/doc/
+
+!/output/sampleoutput.xml

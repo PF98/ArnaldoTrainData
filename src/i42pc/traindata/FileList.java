@@ -12,7 +12,6 @@ import java.util.ArrayList;
 public class FileList {
 	private ArrayList<FileData> list;
 	private File folder;
-	private String invalidPath = null;
 	private String startingFile;
 	
 	/**
@@ -41,23 +40,13 @@ public class FileList {
 				XMLFileReader fr = new XMLFileReader();
 				fr.setFile(file);
 				if (!fr.readAll()) {
-					invalidPath = file.getPath();
 					list.clear();
 					return false;
 				}
 				list.add(fr.returnData());
 			}
 		}
-		invalidPath = null;
 		return true;
-	}
-	
-	/**
-	 * Returns the path of the invalid file, if it exists, {@code null} otherwise
-	 * @return The path of the invalid file, if it exists, {@code null} otherwise
-	 */
-	public String getInvalidFilePath() {
-		return invalidPath;
 	}
 	
 
@@ -90,12 +79,22 @@ public class FileList {
 		return out.toString();
 	}
 	
+	/**
+	 * Returns true if the provided String corresponds to the name of a file in the list
+	 * @param fileName The given name of the file
+	 * @return True if a file is found, false otherwise
+	 */
 	private boolean isFile(String fileName) {
 		if (getFile(fileName) == null) 
 			return false;
 		return true;
 	}
 	
+	/**
+	 * Returns the file object corresponding to the given file name, if it exists
+	 * @param fileName The given file name
+	 * @return A FileData object containing all of the data if it exists, null otherwise
+	 */
 	public FileData getFile(String fileName) {
 		for (FileData f : list) {
 			if (fileName.equals(f.getName()))
@@ -105,6 +104,12 @@ public class FileList {
 		return null;
 	}
 	
+	/**
+	 * Checks if a given file has a given title 
+	 * @param fileName The name of the file
+	 * @param title The searched title
+	 * @return True if the file has such title, false otherwise or if the file doesn't exist
+	 */
 	private boolean hasTitle(String fileName, String title) {
 		FileData file = getFile(fileName);
 		if (file == null)
@@ -114,6 +119,12 @@ public class FileList {
 		return false;
 	}
 	
+	/**
+	 * Sets the starting file for the sequence to be written to file
+	 * This file will be read first once starting to write
+	 * @param fileName The name of the starting file
+	 * @return False if the file name doesn't correspond to a file, true otherwise
+	 */
 	public boolean setStartingFile(String fileName) {
 		if (isFile(fileName)) {
 			this.startingFile = fileName;
@@ -123,10 +134,29 @@ public class FileList {
 		return true;
 	}
 	
-	public String getStartingFile() {
+	/**
+	 * Returns the name of the starting file of the sequence
+	 * @return The name of the starting file, null if it isn't set
+	 */
+	public String getStartingFileName() {
 		return this.startingFile;
 	}
 	
+	/**
+	 * Returns the FileData object for the starting file
+	 * @return The FileData object for the starting file
+	 */
+	public FileData getStartingFile() {
+		String file = getStartingFileName();
+		if (file != null)
+			return getFile(file);
+		return null;
+	}
+	
+	/**
+	 * Returns a list containing all of the file names saved in this object
+	 * @return An ArrayList<String> containing all of the file names
+	 */
 	public ArrayList<String> getAllFilesNames() {
 		ArrayList<String> out = new ArrayList<String>();
 		for (FileData f : list) {
@@ -135,6 +165,15 @@ public class FileList {
 		return out;
 	}
 	
+	/**
+	 * Adds a link between two files
+	 * @param sourceFile The file from which the link starts
+	 * @param sourceTitle The starting point (a title in sourceFile) for the link
+	 * @param destinationFile The file in which the link ends
+	 * @param destinationTitle The ending point (a title in destinationFile) for the link
+	 * @param destinationRowName The substitutive row name to print the new file
+	 * @return True if the parameters are valid and the link is created, false otherwise
+	 */
 	public boolean addFileLink(String sourceFile, String sourceTitle, String destinationFile, String destinationTitle, String destinationRowName) {
 		if (!isFile(sourceFile) || !isFile(destinationFile))
 			return false;
@@ -142,12 +181,24 @@ public class FileList {
 		if (!hasTitle(sourceFile, sourceTitle) || !hasTitle(destinationFile, destinationTitle))
 			return false;
 		
-		getFile(sourceFile).addLink(sourceTitle, destinationFile, destinationTitle, destinationRowName);
+		getFile(sourceFile).addLink(sourceTitle, destinationFile, destinationTitle, destinationRowName, false);
 				
 		return true;
 	}
 	
 	public boolean addFileLink(String sourceFile, String sourceTitle, String destinationFile, String destinationTitle) {
 		return addFileLink(sourceFile, sourceTitle, destinationFile, destinationTitle, null);
+	}
+	 
+	public boolean addSearchLink(String sourceFile, String sourceTitle, String destinationFile, String destinationTitle, String destinationRowName) {
+		if (!isFile(sourceFile) || !isFile(destinationFile))
+			return false;
+		
+		if (!hasTitle(sourceFile, sourceTitle) || !hasTitle(destinationFile, destinationTitle))
+			return false;
+		
+		getFile(sourceFile).addLink(sourceTitle, destinationFile, destinationTitle, destinationRowName, true);
+				
+		return true;
 	}
 }

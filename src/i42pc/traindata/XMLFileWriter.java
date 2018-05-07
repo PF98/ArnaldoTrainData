@@ -17,14 +17,12 @@ public class XMLFileWriter {
 	private static final String NOT_PRINTING_ROW = "#NO#PRINT#";
 	
 	private FileList fileList;
-	private String filePath;
 	private XMLOutputFactory output;
 	private XMLStreamWriter writer;
 
 	
 	public XMLFileWriter(FileList fileList, String filePath) {
 		this.fileList = fileList;
-		this.filePath = filePath;
 		output = XMLOutputFactory.newInstance();
 		try {
 			writer = output.createXMLStreamWriter(new FileOutputStream(filePath), "utf-8");
@@ -41,7 +39,7 @@ public class XMLFileWriter {
 	}
 	
 	private boolean init(String rootTagName) {
-		FileData currentFile = fileList.getFile(fileList.getStartingFile());
+		FileData currentFile = fileList.getStartingFile();
 		try {
 			writer.writeStartElement(rootTagName); // start root tag
 			
@@ -73,57 +71,95 @@ public class XMLFileWriter {
 			currentFile = fileList.getFile(fileName).cloneWithSomeValues(searchValue, searchTitle);
 		}
 		try {
+			ArrayList<String> fileTitles = currentFile.getTitles();
+
+			int searchCount = 0;
+			String titleOfControl = null;
+			FileData searchFile = null;
+			int valueToControlIndex = 0;
+			currentFile.startLinkOut();
+			while (currentFile.nextLink()) {
+				if (currentFile.isLinkSearch()) {
+					searchCount++;
+					if (searchCount > 1) break;
+					titleOfControl = currentFile.getLinkDestinationTitle();
+					searchFile = fileList.getFile(currentFile.getLinkDestinationFile());
+					valueToControlIndex = fileTitles.indexOf(currentFile.getLinkSourceTitle());
+				}
+			}
+			
+			if (searchCount > 1)
+				return false;
+			boolean isLinkSearching = (searchCount == 1);			
+			
 			while (currentFile.hasNextRow()) {
 				ArrayList<String> activeRow = currentFile.getNextRow();
-				ArrayList<String> fileTitles = currentFile.getTitles();
 				
-				// handles creating a new row
-				String rowTitle = null;
-				String rowAttributeName = null;
-				String attributeVal = null;
-				if (rowTag != null) {
-					ArrayList<String> rowSplit = new ArrayList<String>(Arrays.asList(rowTag.split("_")));
-					if (rowSplit.get(rowSplit.size() - 1).equals(rowAttribute) && rowSplit.size() > 1) {
-						rowTitle = rowTag.substring(0, rowTag.lastIndexOf('_'));
-						rowAttributeName = rowAttribute;
-					}
-					else {
-						rowTitle = rowTag;
-						rowAttributeName = alternateRowAttribute;
-					}
+				boolean rowToPrint = true;
+				if (isLinkSearching) {
+					String valueToControl = activeRow.get(valueToControlIndex);
 					
-					if (substituteRowName != null) {
-						rowTitle = substituteRowName;
-					}
-					attributeVal = activeRow.get(fileTitles.indexOf(rowTag));
-					writer.writeStartElement(rowTitle); // start row tag
-					writer.writeAttribute(rowAttributeName, attributeVal);
-				}
-				else if (substituteRowName == null || !substituteRowName.equals(NOT_PRINTING_ROW)) {
-					rowTitle = DEFAULT_ROW_TITLE;
-					writer.writeStartElement(rowTitle); // start row tag
+					FileData elaboratedSearchFile = searchFile.cloneWithSomeValues(valueToControl, titleOfControl);
+					
+					rowToPrint = elaboratedSearchFile.hasNextRow();
 				}
 				
-				// handles writing the content of a row
-				int id = 0;
-				for (String val : activeRow) {
-					String title = fileTitles.get(id);
-					if (!title.equals(rowTag) && validTitles.contains(title)) {
-						ArrayList<String> titleSplit = new ArrayList<String>(Arrays.asList(title.split("_")));
-						String tagTitle;
-						String attribute;
-						if (titleSplit.get(titleSplit.size() - 1).equals(titleAttribute) && titleSplit.size() > 1) {
-							tagTitle = title.substring(0, title.lastIndexOf('_'));
-							attribute = titleAttribute;
+				if (rowToPrint) {
+					// handles creating a new row
+					String rowTitle = null;
+					String rowAttributeName = null;
+					String attributeVal = null;
+					if ((rowTag != null || substituteRowName != null) && !NOT_PRINTING_ROW.equals(substituteRowName)) {
+						String usedRowTag = (rowTag == null) ? substituteRowName : rowTag;
+						ArrayList<String> rowSplit = new ArrayList<String>(Arrays.asList(usedRowTag.split("_")));
+						if (rowSplit.get(rowSplit.size() - 1).equals(rowAttribute) && rowSplit.size() > 1) {
+							rowTitle = usedRowTag.substring(0, usedRowTag.lastIndexOf('_'));
+							rowAttributeName = rowAttribute;
 						}
 						else {
-							tagTitle = title;
-							attribute = alternateTitleAttribute;
+							rowTitle = usedRowTag;
+							rowAttributeName = alternateRowAttribute;
 						}
-						writer.writeStartElement(tagTitle);
-						writer.writeAttribute(attribute, val);
 						
-						if (currentFile.hasLinkFrom(title)) {
+						if (substituteRowName != null) {
+							rowTitle = substituteRowName;
+						}
+						writer.writeStartElement(rowTitle); // start row tag
+	
+						int titleIndex = fileTitles.indexOf(rowTag == null ? usedRowTag : rowTag);
+						if (titleIndex != -1) {
+							attributeVal = activeRow.get(fileTitles.indexOf(usedRowTag));
+							writer.writeAttribute(rowAttributeName, attributeVal);
+						}
+					}
+					else if (substituteRowName == null) {
+						rowTitle = DEFAULT_ROW_TITLE;
+						writer.writeStartElement(rowTitle); // start row tag
+					}
+					else if (!NOT_PRINTING_ROW.equals(substituteRowName)) {
+						rowTitle = substituteRowName;
+					}
+					
+					// handles writing the content of a row
+					int id = 0;
+					for (String val : activeRow) {
+						String title = fileTitles.get(id);
+						if (!title.equals(rowTag) && validTitles.contains(title)) {
+							ArrayList<String> titleSplit = new ArrayList<String>(Arrays.asList(title.split("_")));
+							String tagTitle;
+							String attribute;
+							if (titleSplit.get(titleSplit.size() - 1).equals(titleAttribute) && titleSplit.size() > 1) {
+								tagTitle = title.substring(0, title.lastIndexOf('_'));
+								attribute = titleAttribute;
+							}
+							else {
+								tagTitle = title;
+								attribute = alternateTitleAttribute;
+							}
+							writer.writeStartElement(tagTitle);
+							writer.writeAttribute(attribute, val);
+						}						
+						if (currentFile.hasLinkFrom(title) && !currentFile.isLinkSearch()) {
 							FileData linkedFile = fileList.getFile(currentFile.getLinkDestinationFile());
 							String newRow = currentFile.getLinkRowName();
 							String subName = null;
@@ -135,12 +171,14 @@ public class XMLFileWriter {
 								return false;
 						}
 						
-						writer.writeEndElement(); // closes the single element inside a row
+						if (!title.equals(rowTag) && validTitles.contains(title)) {
+							writer.writeEndElement(); // closes the single element inside a row
+						}
+						id++;
 					}
-					id++;
+					if (!NOT_PRINTING_ROW.equals(substituteRowName))
+						writer.writeEndElement(); // closes the row
 				}
-				if (substituteRowName == null || !substituteRowName.equals(NOT_PRINTING_ROW))
-					writer.writeEndElement(); // closes the row
 			}			
 		} catch (Exception e) {
 			return false;

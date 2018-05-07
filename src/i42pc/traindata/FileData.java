@@ -19,6 +19,7 @@ public class FileData {
 	private int activeRow = 0;
 	private boolean finished = false;
 	private Link currentLink;
+	private int activeLinkCount = 0;
 	
 	private String rowTag;
 	private ArrayList<String> validTitles = null;
@@ -258,10 +259,23 @@ public class FileData {
 		return out.toString();
 	}
 	
-	public void addLink(String sourceTitle, String destinationFile, String destinationTitle, String destinationRowName) {
-		Link newLink = new Link(sourceTitle, destinationFile, destinationTitle, destinationRowName);
+	public void addLink(String sourceTitle, String destinationFile, String destinationTitle, String destinationRowName, boolean isSearch) {
+		Link newLink = new Link(sourceTitle, destinationFile, destinationTitle, destinationRowName, isSearch);
 		
 		linkList.add(newLink);
+	}
+	
+	public void startLinkOut() {
+		activeLinkCount = 0;
+	}
+	
+	
+	public boolean nextLink() {
+		if (activeLinkCount < linkList.size()) {
+			currentLink = linkList.get(activeLinkCount++);
+			return true;
+		}
+		return false;
 	}
 	
 	public boolean hasLinkFrom(String sourceTitle) {
@@ -272,6 +286,10 @@ public class FileData {
 			}
 		}
 		return false;
+	}
+	
+	public String getLinkSourceTitle() {
+		return currentLink.getSourceTitle();
 	}
 	
 	public String getLinkDestinationFile() {
@@ -286,20 +304,30 @@ public class FileData {
 		return currentLink.getDestinationRowName();
 	}
 	
+	public boolean isLinkSearch() {
+		return currentLink.isSearch();
+	}
+	
 	class Link {
 		private String destinationFile;
 		private String sourceTitle;
 		private String destinationTitle;
 		private String destinationRowName;
+		private boolean search;
 
 		public Link(String sourceTitle, String destinationFile, String destinationTitle) {
 			this(sourceTitle, destinationFile, destinationTitle, null);
 		}
 		public Link(String sourceTitle, String destinationFile, String destinationTitle, String destinationRowName) {
+			this(sourceTitle, destinationFile, destinationTitle, destinationRowName, false);
+		}
+		
+		public Link(String sourceTitle, String destinationFile, String destinationTitle, String destinationRowName, boolean isSearch) {
 			this.destinationFile = destinationFile;
 			this.sourceTitle = sourceTitle;
 			this.destinationTitle = destinationTitle;
 			this.destinationRowName = destinationRowName;
+			this.search = isSearch;
 		}
 
 		public String getDestinationFile() {
@@ -316,6 +344,10 @@ public class FileData {
 		
 		public String getDestinationRowName() {
 			return destinationRowName;
+		}
+		
+		public boolean isSearch() {
+			return search;
 		}
 	}
 }
